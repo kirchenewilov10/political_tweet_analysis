@@ -1,0 +1,388 @@
+{% extends 'user/base.html' %}
+
+{% block page_content %}
+    <style>
+        .fl_input_1 {
+            height: 20px;
+            width: 50px;
+        }
+        .fl_input_1_div {
+            margin-bottom: 15px;
+        }
+        .cubox{
+            margin-bottom: 5px;
+        }
+        .cuchart{
+            height: calc(50vh - 170px) !important;
+        }
+        .cutable{
+            width: 100% !important;
+        }
+    </style>
+    <section class="content" id="dashboard1">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                <div class="col-md-8 col-lg-8 col-sm-8">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Users having most new likes and followers</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">Most New likes and followers for the last
+                                            <input type="number" v-model="lf_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_lf_byday">
+                                            days</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <table class="table table-bordered cutable"  id="lf_table">
+                                <thead>
+                                    <tr>
+                                        <th>Person</th>
+                                        <th>Likes</th>
+                                        <th>Followers</th>
+                                        <th>Labels</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="twuser in vt_tw_lf_users">
+                                        <td>[[ twuser.username ]]</td>
+                                        <td>[[ twuser.likes ]]</td>
+                                        <td>[[ twuser.followers ]]</td>
+                                        <td>[[ twuser.hashtags ]]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-4 col-sm-4">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Most active users</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">Most active users for the last
+                                            <input type="number" v-model="ac_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_ac_byday">
+                                            days</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <table class="table table-bordered cutable" id="ac_table">
+                                <thead>
+                                    <tr>
+                                        <th>Person</th>
+                                        <th>Likes</th>
+                                        <th>Tweets</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="twuser in vt_tw_ac_users">
+                                        <td>[[ twuser.username ]]</td>
+                                        <td>[[ twuser.likes ]]</td>
+                                        <td>[[ twuser.tweets ]]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                <div class="col-md-4 col-lg-4 col-sm-4">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Trending Hashtag</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">Most trending hashtags for the last
+                                            <input type="number" v-model="ht_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_ht_byday">
+                                            days</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <table class="table table-bordered cutable" id="hashtag_table">
+                                <thead>
+                                    <tr>
+                                        <th>Hashtag</th>
+                                        <th>Tweets</th>
+                                        <th>Likes</th>
+                                        <th>Retweets</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="htag in tw_htags">
+                                        <td>[[ htag.hashtag ]]</td>
+                                        <td>[[ htag.tweet_count ]]</td>
+                                        <td>[[ htag.likes_count ]]</td>
+                                        <td>[[ htag.retweet_count ]]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8 col-lg-8 col-sm-8">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Likes and Followers timeline</h3>
+                        </div>
+                        <div class="box-body chart-responsive">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">
+                                            <select v-model="user_A_id" v-on:change="on_fitler_lfchart">
+                                                {% for user in users %}
+                                                    <option value="{{ user.id }}">{{ user.twitter_name }}</option>
+                                                {% endfor %}
+                                            </select>'s
+                                            <select v-model="chart_f_or_l" v-on:change="on_fitler_lfchart">
+                                                <option value="F">Followers</option>
+                                                <option value="L">Likes</option>
+                                            </select> timeline for
+                                            <input type="number" v-model="lfchart_days_offset" class="fl_input_1" v-on:keyup.13="on_fitler_lfchart">days
+                                            compared to
+                                            <select v-model="user_B_id" v-on:change="on_fitler_lfchart">
+                                                {% for user in users %}
+                                                    <option value="{{ user.id }}">{{ user.twitter_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart cuchart" id="line-chart" style="height: 300px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+<script>
+$(document).ready(function () {
+    let dashboard1_vue;
+    let tw_lf_users = [];
+    let tw_ac_users = [];
+    let tw_lf_graph = [];
+    let tw_users = [];
+    let tw_htags = [];
+
+    {% for user in users %}
+        tw_users.push({
+           id: {{ user.id }}
+        });
+    {% endfor %}
+
+    {% for tw_hashtag in twitter_hashtag_info %}
+        tw_htags.push({
+            hashtag: '{{ tw_hashtag.hashtag }}',
+            tweet_count: {{ tw_hashtag.tweet_count }},
+            likes_count: {{ tw_hashtag.likes_count }},
+            retweet_count: {{ tw_hashtag.retweet_count }}
+        });
+    {% endfor %}
+
+    {% for tw_user in twitter_analysis %}
+        tw_lf_users.push({
+            username: '{{ tw_user.twitter_name }}',
+            likes: {{ tw_user.favourites_count }},
+            followers: {{ tw_user.followers_count }},
+            hashtags: '{{ tw_user.hashtags }}'
+        });
+    {% endfor %}
+
+    {% for tw_user in twitter_act_info %}
+        tw_ac_users.push({
+            username: '{{ tw_user.twitter_name }}',
+            likes: {{ tw_user.favourites_count }},
+            tweets: {{ tw_user.tweet_count }},
+        });
+    {% endfor %}
+
+    {% for item in twitter_lf_graph_info %}
+        tw_lf_graph.push({
+            x_date: '{{ item.x_date }}',
+            y_axis_A: {{ item.y_axis_A }},
+            y_axis_B: {{ item.y_axis_B }},
+        });
+    {% endfor %}
+
+    dashboard1_vue = new Vue({
+        delimiters: ['[[', ']]'],
+        el: "#dashboard1",
+        data: {
+            vt_tw_lf_users: tw_lf_users,
+            vt_tw_ac_users: tw_ac_users,
+            tw_htags: tw_htags,
+
+            lf_days_offset: 7,
+            ac_days_offset: 7,
+            ht_days_offset: 7,
+
+            user_A_id: {{ user_A_id }},
+            chart_f_or_l: '{{ y_axis }}',
+            lfchart_days_offset: {{ days_offset }},
+            user_B_id: {{ user_B_id }},
+        },
+        methods: {
+            on_filter_lf_byday: function () {
+                if(this.lf_days_offset === '') {
+                    alert("Please input days");return;
+                }
+                let param = {
+                    lf_days_offset: this.lf_days_offset,
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'lf_filter',
+                    data: param,
+                    success: function (res) {
+                        var res = JSON.parse(res);
+                        dashboard1_vue.vt_tw_users = new Array();
+                        for (var i = 0;i < res.length;i++){
+                            var item = {
+                                username: res[i]['twitter_name'],
+                                likes: res[i]['favourites_count'],
+                                followers: res[i]['followers_count'],
+                                hashtags: res[i]['hashtags'],
+                            };
+                            dashboard1_vue.vt_tw_users.push(item);
+                        }
+                    }
+                });
+            },
+            on_filter_ac_byday: function (){
+                if(this.ac_days_offset === '') {
+                    alert("Please input days");return;
+                }
+                let param = {
+                    ac_days_offset: this.ac_days_offset,
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'lf_ac_filter',
+                    data: param,
+                    success: function (res) {
+                        var res = JSON.parse(res);
+                        dashboard1_vue.vt_tw_ac_users = new Array();
+                        for (var i = 0;i < res.length;i++){
+                            var item = {
+                                username: res[i]['twitter_name'],
+                                likes: res[i]['favourites_count'],
+                                tweets: res[i]['tweet_count'],
+                            };
+                            dashboard1_vue.vt_tw_ac_users.push(item);
+                        }
+                    }
+                });
+            },
+            on_filter_ht_byday: function() {
+                if(this.ht_days_offset === '') {
+                    alert("Please input days");return;
+                }
+                let param = {
+                    ht_days_offset: this.ht_days_offset
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'lf_ht_filter',
+                    data: param,
+                    success: function (res) {
+                        var res = JSON.parse(res);
+                        dashboard1_vue.tw_htags = new Array();
+                        for (var i = 0;i < res.length;i++){
+                            var item = {
+                                hashtag: res[i]['twitter_name'],
+                                tweet_count: res[i]['tweet_count'],
+                                likes_count: res[i]['likes_count'],
+                                retweet_count: res[i]['retweet_count'],
+                            };
+                            dashboard1_vue.tw_htags.push(item);
+                        }
+                    }
+                });
+            },
+            on_fitler_lfchart: function () {
+                if (this.lfchart_days_offset === ''){
+                    alert("Please input days");return;
+                }
+                let param = {
+                    lfchart_days_offset: this.lfchart_days_offset,
+                    user_A_id: this.user_A_id,
+                    user_B_id: this.user_B_id,
+                    chart_f_or_l: this.chart_f_or_l
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'lfchart_filter',
+                    data: param,
+                    success: function (res) {
+                        res = JSON.parse(res);
+                        $('#line-chart').html('');
+                        new Morris.Line({
+                            element: 'line-chart',
+                            resize: true,
+                            data: res,
+                            xkey: 'x_date',
+                            ykeys: ['y_axis_A', 'y_axis_B'],
+                            labels: ['Person A', 'Person B'],
+                            lineColors: ['#3c8dbc', '#a0d0e0'],
+                            hideHover: 'auto'
+                        });
+                    }
+                });
+            },
+        },
+    });
+    var height = (window.innerHeight - 570) / 2 + "px";
+    $('#lf_table').DataTable({
+        dom: '<"top"R<"clear">>rt<"bottom"lip<"clear">>',
+        pagingType: "full_numbers",
+        scrollX: true,
+        scrollY: height,
+        lengthMenu: [[50, 100, 150, ], [50, 100, 150,]],
+    });
+    $('#ac_table').DataTable({
+        dom: '<"top"R<"clear">>rt<"bottom"lip<"clear">>',
+        pagingType: "full_numbers",
+        scrollX: true,
+        scrollY: height,
+        lengthMenu: [[50, 100, 150, ], [50, 100, 150,]],
+    });
+    $('#hashtag_table').DataTable({
+        dom: '<"top"R<"clear">>rt<"bottom"lip<"clear">>',
+        pagingType: "full_numbers",
+        scrollX: true,
+        scrollY: height,
+        lengthMenu: [[50, 100, 150, ], [50, 100, 150,]],
+    });
+    new Morris.Line({
+        element: 'line-chart',
+        resize: true,
+        data: tw_lf_graph,
+        xkey: 'x_date',
+        ykeys: ['y_axis_A', 'y_axis_B'],
+        labels: ['Person A', 'Person B'],
+        lineColors: ['#3c8dbc', '#a0d0e0'],
+        hideHover: 'auto'
+    });
+});
+
+</script>
+
+{% endblock %}

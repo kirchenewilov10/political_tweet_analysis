@@ -1,0 +1,373 @@
+{% extends 'user/base.html' %}
+
+{% block page_content %}
+    <style>
+        .fl_input_1 {
+            height: 20px;
+            width: 50px;
+        }
+        .fl_input_1_div {
+            margin-bottom: 15px;
+        }
+        .cuchart{
+            height: calc(50vh - 170px) !important;
+        }
+        .cubox{
+            margin-bottom: 5px;
+        }
+    </style>
+    <section class="content" id="dashboard2">
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                <div class="col-md-8 col-lg-8 col-sm-8">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">New followers</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">New followers for the last
+                                            <input type="number" v-model="nf_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_nf_byday">
+                                            days for</span>
+                                        <select v-model="nf_userid" v-on:change="on_filter_nf_byday">
+                                                {% for user in users %}
+                                                    <option value="{{ user.id }}">{{ user.twitter_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart cuchart" id="nf_chart" style="height: 300px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-4 col-sm-4">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Top 5 most likes by tag</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">Top 5 most likes for the last
+                                            <input type="number" v-model="tt_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_tt_byday">
+                                            days</span>
+                                        <select v-model="tt_hashtag_id" v-on:change="on_filter_tt_byday">
+                                            {% for hashtag in hashtags %}
+                                                <option value="{{ hashtag }}">{{ hashtag }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart cuchart" id="tt_chart" style="height: 300px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                <div class="col-md-4 col-lg-4 col-sm-4">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Trending Hashtag</h3>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">Most trending hashtags for the last
+                                            <input type="number" v-model="th_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_th_byday">
+                                            days</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart cuchart" id="th_chart" style="height: 300px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8 col-lg-8 col-sm-8">
+                    <div class="box box-info cubox">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">Person with the most likes</h3>
+                        </div>
+                        <div class="box-body chart-responsive">
+                            <div class="row">
+                                <div class="col-md-12 col-lg-12 col-sm-12">
+                                    <div class="fl_input_1_div">
+                                        <span style="margin-bottom: 5px">Person with the most likes for the last
+                                            <input type="number" v-model="ml_days_offset" class="fl_input_1" v-on:keyup.13="on_filter_ml_byday">
+                                            days
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart cuchart" id="ml_chart" style="height: 300px; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+<script>
+$(document).ready(function () {
+    let dashboard2_vue;
+    let tw_nf_graph = [];
+    let tw_tt_users = [];
+    let tw_tt_hashtags = [];
+    let tw_ml_person = [];
+
+    {% for item in twitter_new_followers %}
+        tw_nf_graph.push({
+            x_date: '{{ item.x_date }}',
+            y_axis_A: {{ item.new_followers_cn }},
+        });
+    {% endfor %}
+
+    {% for item in twitter_topliked_tweets %}
+        var tweet_text = "{{ item.tweet_text }}";
+        if (tweet_text.length > 10){
+            tweet_text = tweet_text.slice(0,8);
+            tweet_text += '..';
+        }
+        tw_tt_users.push({
+            label: tweet_text,
+            value: {{ item.liked_count }},
+        });
+    {% endfor %}
+
+    {% for item in twitter_tthashtag_chart %}
+        tw_tt_hashtags.push({
+            label: '{{ item.hashtag }}',
+            value: {{ item.likes_count }},
+        });
+    {% endfor %}
+
+    {% for item in twitter_mlperson %}
+        tw_ml_person.push({
+            x_date: '{{ item.x_date }}',
+            y_axis_A: {{ item.new_favourites_count_cn }},
+            y_axis_man: '{{ item.twitter_name }}',
+        });
+    {% endfor %}
+
+    dashboard2_vue = new Vue({
+        delimiters: ['[[', ']]'],
+        el: "#dashboard2",
+        data: {
+            nf_userid: {{ userid }},
+            tt_hashtag_id: '{{ hashtag_id }}',
+
+            nf_days_offset: 7,
+            tt_days_offset: 7,
+            th_days_offset: 7,
+            ml_days_offset: 7
+        },
+        methods: {
+            on_filter_nf_byday: function () {
+                if(this.nf_days_offset === '') {
+                    alert("Please input days");return;
+                }
+                let param = {
+                    nf_days_offset: this.nf_days_offset,
+                    nf_userid: this.nf_userid
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'nf_filter',
+                    data: param,
+                    success: function (res) {
+                        var res = JSON.parse(res);
+                        var chartarray = new Array();
+                        for (var i =0; i< res.length;i++){
+                            var item = {
+                                x_date: res[i]['x_date'],
+                                y_axis_A: res[i]['new_followers_cn'],
+                            };
+                            chartarray.push(item);
+                        }
+                        $('#nf_chart').html('');
+                        new Morris.Bar({
+                          element: 'nf_chart',
+                          resize: true,
+                          data: chartarray,
+                          barColors: ['#3c8dbc'],
+                          xkey: 'x_date',
+                          ykeys: ['y_axis_A'],
+                          labels: ['new followers'],
+                          hideHover: 'auto'
+                        });
+                    }
+                });
+            },
+            on_filter_tt_byday: function (){
+                if(this.tt_days_offset === '') {
+                    alert("Please input days");return;
+                }
+                let param = {
+                    tt_days_offset: this.tt_days_offset,
+                    tt_hashtag_id: this.tt_hashtag_id
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'tt_filter',
+                    data: param,
+                    success: function (res) {
+                        var res = JSON.parse(res);
+                        var chartarray = new Array();
+                        for (var i =0; i< res.length;i++){
+                            var tweet_text = res[i]['tweet_text'];
+                            if (tweet_text.length > 10){
+                                tweet_text = tweet_text.slice(0,8);
+                                tweet_text += '..';
+                            }
+                            var item = {
+                                label: tweet_text,
+                                value: res[i]['liked_count'],
+                            };
+                            chartarray.push(item);
+                        }
+                        $('#tt_chart').html('');
+                        new Morris.Donut({
+                              element: 'tt_chart',
+                              resize: true,
+                              colors: ['#3c8dbc', '#00BCD4','#009688', '#8bc34a', '#cddc39'],
+                              data: chartarray,
+                              hideHover: 'auto'
+                            });
+
+                    }
+                });
+            },
+            on_filter_th_byday: function() {
+                if(this.th_days_offset === '') {
+                    alert("Please input days");return;
+                }
+                let param = {
+                    th_days_offset: this.th_days_offset
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'th_filter',
+                    data: param,
+                    success: function (res) {
+                        var res = JSON.parse(res);
+                        var chartarray = new Array();
+                        for (var i =0; i< res.length;i++){
+                            var item = {
+                                label: res[i]['hashtag'],
+                                value: res[i]['likes_count'],
+                            };
+                            chartarray.push(item);
+                        }
+                        $('#th_chart').html('');
+                        new Morris.Donut({
+                              element: 'th_chart',
+                              resize: true,
+                              colors: ['#3c8dbc', '#00BCD4','#009688', '#8bc34a', '#cddc39'],
+                              data: chartarray,
+                              hideHover: 'auto'
+                            });
+                    }
+                });
+            },
+            on_filter_ml_byday: function () {
+                if (this.ml_days_offset === ''){
+                    alert("Please input days");return;
+                }
+                let param = {
+                    ml_days_offset: this.ml_days_offset,
+                };
+                $.ajax({
+                    type: 'POST',
+                    url: 'ml_filter',
+                    data: param,
+                    success: function (res) {
+                        res = JSON.parse(res);
+                        var chartarray = new Array();
+                        for (var i =0; i< res.length;i++){
+                            var item = {
+                                x_date: res[i]['x_date'],
+                                y_axis_A: res[i]['new_favourites_count_cn'],
+                                y_axis_man: res[i]['twitter_name'],
+                            };
+                            chartarray.push(item);
+                        }
+                        $('#ml_chart').html('');
+                        new Morris.Bar({
+                              element: 'ml_chart',
+                              resize: true,
+                              data: chartarray,
+                              barColors: ['#3c8dbc'],
+                              xkey: 'x_date',
+                              ykeys: ['y_axis_A'],
+                              labels: [" daily likes"],
+                              hideHover: 'auto',
+                              hoverCallback: function (index, options, content, row) {
+                                  let name_div = "<div class='morris-hover-row-label'>" + row.y_axis_man + "</div>";
+                                  return content + name_div;
+                              }
+                        });
+                    }
+                });
+            },
+        },
+    });
+    new Morris.Bar({
+      element: 'nf_chart',
+      resize: true,
+      data: tw_nf_graph,
+      barColors: ['#3c8dbc'],
+      xkey: 'x_date',
+      ykeys: ['y_axis_A'],
+      labels: ['new followers'],
+      hideHover: 'auto'
+    });
+    new Morris.Bar({
+      element: 'ml_chart',
+      resize: true,
+      data: tw_ml_person,
+      barColors: ['#3c8dbc'],
+      xkey: 'x_date',
+      ykeys: ['y_axis_A'],
+      labels: [" daily likes"],
+      hideHover: 'auto',
+      hoverCallback: function (index, options, content, row) {
+          let name_div = "<div class='morris-hover-row-label'>" + row.y_axis_man + "</div>";
+          return content + name_div;
+      }
+    });
+    new Morris.Donut({
+      element: 'tt_chart',
+      resize: true,
+      colors: ['#3c8dbc', '#00BCD4','#009688', '#8bc34a', '#cddc39'],
+      data: tw_tt_users,
+      hideHover: 'auto'
+    });
+    new Morris.Donut({
+      element: 'th_chart',
+      resize: true,
+      colors: ['#3c8dbc', '#00BCD4','#009688', '#8bc34a', '#cddc39'],
+      data: tw_tt_hashtags,
+      hideHover: 'auto'
+    });
+
+});
+
+</script>
+
+{% endblock %}
